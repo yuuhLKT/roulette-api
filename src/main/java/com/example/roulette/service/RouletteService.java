@@ -20,7 +20,6 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 public class RouletteService {
@@ -51,7 +50,8 @@ public class RouletteService {
         scheduler.schedule(this::startInProgress, 30, TimeUnit.SECONDS);
 
         scheduler.scheduleAtFixedRate(() -> {
-            long remainingTime = 30 - (System.currentTimeMillis() - currentRound.getStartTime().toEpochSecond(ZoneOffset.UTC)) / 1000;
+            long elapsedTime = (System.currentTimeMillis() - currentRound.getStartTime().toInstant(ZoneOffset.UTC).toEpochMilli()) / 1000;
+            long remainingTime = 30 - elapsedTime;
             if (remainingTime <= 0) {
                 return;
             }

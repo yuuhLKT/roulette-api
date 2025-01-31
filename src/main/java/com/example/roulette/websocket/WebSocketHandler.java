@@ -1,20 +1,19 @@
 package com.example.roulette.websocket;
 
-import com.example.roulette.dto.RoundResponseDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.*;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-@Component
 public class WebSocketHandler extends TextWebSocketHandler {
 
-    private final Set<WebSocketSession> sessions = new HashSet<>();
+    private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
     private final ObjectMapper objectMapper;
 
     public WebSocketHandler() {
@@ -28,24 +27,21 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
     }
 
-    public void notifyClients(RoundResponseDTO roundResponse) {
-        String message;
+    public void notifyClients(Object message) {
         try {
-            message = objectMapper.writeValueAsString(roundResponse);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to serialize round response", e);
-        }
-
-        for (WebSocketSession session : sessions) {
-            try {
-                session.sendMessage(new TextMessage(message));
-            } catch (IOException e) {
-                e.printStackTrace();
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            TextMessage textMessage = new TextMessage(jsonMessage);
+            for (WebSocketSession session : sessions) {
+                if (session.isOpen()) {
+                    session.sendMessage(textMessage);
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

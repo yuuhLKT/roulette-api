@@ -1,8 +1,6 @@
 package com.example.roulette.controller;
 
-import com.example.roulette.dto.BetRequestDTO;
-import com.example.roulette.dto.BetResponseDTO;
-import com.example.roulette.dto.RoundResponseDTO;
+import com.example.roulette.dto.*;
 import com.example.roulette.exception.UserNotFoundException;
 import com.example.roulette.model.User;
 import com.example.roulette.service.RouletteService;
@@ -43,10 +41,8 @@ public class RouletteController {
 
     @PostMapping("/user")
     @Operation(summary = "Create a new user", description = "Creates a new user with the given username and initial balance")
-    public ResponseEntity<User> createUser(
-            @RequestParam @Parameter(description = "Username of the new user") String username,
-            @RequestParam @Parameter(description = "Initial balance of the new user") BigDecimal initialBalance) {
-        User user = userService.createUser(username, initialBalance);
+    public ResponseEntity<User> createUser(@RequestBody UserRequestDTO userRequest) {
+        User user = userService.createUser(userRequest.getUsername(), userRequest.getInitialBalance());
         return ResponseEntity.ok(user);
     }
 
@@ -54,9 +50,9 @@ public class RouletteController {
     @Operation(summary = "Add balance to a user", description = "Adds the specified amount to the user's balance")
     public ResponseEntity<User> addBalance(
             @PathVariable @Parameter(description = "ID of the user") Long userId,
-            @RequestParam @Parameter(description = "Amount to add to the user's balance") BigDecimal amount) {
+            @RequestBody BalanceRequestDTO balanceRequest) {
         try {
-            User user = userService.addBalance(userId, amount);
+            User user = userService.addBalance(userId, balanceRequest.getAmount());
             return ResponseEntity.ok(user);
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
